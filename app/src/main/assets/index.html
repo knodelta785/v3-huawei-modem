@@ -1,0 +1,691 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ONGARAND</title>
+<style>
+  :root{--bg:#0b1020;--card:#151c30;--line:#26314d;--tx:#e8edf5;--mut:#8b98b3;--ac:#2f9bff;--ok:#2ecc71;--warn:#f1c40f;--bad:#e74c3c}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.4 system-ui,sans-serif;padding-bottom:70px}
+  header{padding:14px 16px;font-weight:700;font-size:18px;letter-spacing:.12em;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;background:linear-gradient(90deg,#0b1020,#0f2a55)}
+  header small{color:var(--mut);font-weight:400;letter-spacing:0;font-size:13px}
+  .tab{display:none;padding:12px}
+  .tab.on{display:block}
+  nav{position:fixed;bottom:0;left:0;right:0;display:flex;background:var(--card);border-top:1px solid var(--line)}
+  nav button{flex:1;background:none;border:0;color:var(--mut);padding:13px 2px;font-size:11.5px}
+  nav button.on{color:var(--ac);font-weight:700}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px}
+  h3{margin:0 0 8px;font-size:13px;color:var(--mut);font-weight:600;text-transform:uppercase;letter-spacing:.05em}
+  label{display:block;margin:8px 0 3px;color:var(--mut);font-size:13px}
+  input,select{width:100%;padding:10px;border-radius:8px;border:1px solid var(--line);background:#0e1426;color:var(--tx);font-size:15px}
+  button.b{background:var(--ac);color:#fff;border:0;border-radius:8px;padding:11px 14px;font-size:15px;margin:8px 6px 0 0}
+  button.b.g{background:#26314d}
+  button.b.r{background:var(--bad)}
+  button.b:disabled{opacity:.45}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .m{background:#0e1426;border-radius:10px;padding:10px}
+  .m span{display:block;color:var(--mut);font-size:12px}
+  .m b{font-size:20px}
+  .q-ok{color:var(--ok)} .q-good{color:#9be15d} .q-fair{color:var(--warn)} .q-bad{color:var(--bad)}
+  .chk{display:flex;flex-wrap:wrap;gap:8px}
+  .chk label{display:flex;align-items:center;gap:6px;margin:0;background:#0e1426;border:1px solid var(--line);border-radius:8px;padding:9px 12px;color:var(--tx);font-size:14px}
+  .chk input{width:auto}
+  .prof{border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:8px;background:#0e1426}
+  .prof .d{color:var(--ok);font-size:12px}
+  pre{white-space:pre-wrap;word-break:break-all;font-size:11px;color:#9fb0c3;margin:0}
+  .msg{padding:8px 10px;border-radius:8px;margin-top:8px;font-size:14px;display:none}
+  .msg.ok{display:block;background:#12311f;color:var(--ok)} .msg.err{display:block;background:#3a1717;color:#ff8a80}
+  .note{color:var(--mut);font-size:12px;margin-top:6px}
+  .goals{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .goal{background:#0e1426;border:2px solid var(--line);border-radius:12px;padding:12px;text-align:left;color:var(--tx);font-size:14px}
+  .goal b{display:block;font-size:16px;margin-bottom:2px}
+  .goal small{color:var(--mut)}
+  .goal.on{border-color:var(--ac);background:#10284d}
+  .bar{height:8px;background:#0e1426;border-radius:6px;overflow:hidden;margin-top:8px}
+  .bar i{display:block;height:100%;width:0;background:var(--ac);transition:width .3s}
+  .res{border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:8px;background:#0e1426}
+  .res.best{border-color:var(--ok)}
+  .res .t{display:flex;justify-content:space-between;font-weight:600}
+  .res .s{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-top:6px;font-size:12px;color:var(--mut);text-align:center}
+  .res .s b{display:block;color:var(--tx);font-size:15px}
+  .kv{color:var(--mut);font-size:12.5px;margin-top:4px}
+</style>
+</head>
+<body>
+<header><span>ONGARAND</span><small id="hstat">belum login</small></header>
+
+<!-- LOGIN -->
+<section class="tab on" id="t-login">
+  <div class="card">
+    <h3>Login modem</h3>
+    <label>Alamat modem</label><input id="base" value="http://192.168.8.1" inputmode="url">
+    <label>Username</label><input id="user" value="admin" autocapitalize="none">
+    <label>Password</label><input id="pass" type="password" autocapitalize="none">
+    <button class="b" id="btnLogin">Login</button>
+    <div class="msg" id="loginMsg"></div>
+    <div class="note">HP harus tersambung ke WiFi modem. Password tidak disimpan.</div>
+  </div>
+</section>
+
+<!-- SINYAL -->
+<section class="tab" id="t-sig">
+  <div class="card"><h3>Jaringan</h3>
+    <div class="grid">
+      <div class="m"><span>Operator</span><b id="s-op">-</b></div>
+      <div class="m"><span>Tipe</span><b id="s-type">-</b></div>
+      <div class="m"><span>Band aktif</span><b id="s-band">-</b></div>
+      <div class="m"><span>PCI / Cell</span><b id="s-cell" style="font-size:16px">-</b></div>
+    </div>
+  </div>
+  <div class="card"><h3>Kekuatan sinyal</h3>
+    <div class="grid">
+      <div class="m"><span>RSRP (dBm)</span><b id="s-rsrp">-</b></div>
+      <div class="m"><span>SINR (dB)</span><b id="s-sinr">-</b></div>
+      <div class="m"><span>RSRQ (dB)</span><b id="s-rsrq">-</b></div>
+      <div class="m"><span>RSSI (dBm)</span><b id="s-rssi">-</b></div>
+      <div class="m"><span>EARFCN</span><b id="s-earfcn" style="font-size:16px">-</b></div>
+      <div class="m"><span>Bandwidth DL/UL</span><b id="s-bw" style="font-size:16px">-</b></div>
+    </div>
+    <div class="note">Stabil = SINR tinggi (di atas 10 dB bagus) dan RSRP lebih baik dari -95 dBm. Diperbarui tiap 3 detik.</div>
+  </div>
+</section>
+
+<!-- AUTO -->
+<section class="tab" id="t-auto">
+  <div class="card"><h3>1. Pilih tujuan</h3>
+    <div class="goals" id="goals">
+      <button class="goal on" data-g="game"><b>Game</b><small>Ping & jitter terendah</small></button>
+      <button class="goal" data-g="stream"><b>Streaming</b><small>Kecepatan unduh stabil</small></button>
+      <button class="goal" data-g="zoom"><b>Zoom / Meeting</b><small>Jitter & loss kecil</small></button>
+      <button class="goal" data-g="overall"><b>Overall</b><small>Seimbang untuk semua</small></button>
+    </div>
+  </div>
+  <div class="card"><h3>2. Band yang dipindai</h3>
+    <div class="chk" id="scanBands"></div>
+    <label style="margin-top:10px"><input type="checkbox" id="scanAuto" checked style="width:auto"> Ikut uji mode "Auto (semua band)"</label>
+    <div class="note">Tiap band dikunci bergantian, diukur sinyal, ping, jitter, dan kecepatan unduh (butuh data aktif di modem). Sekitar 30-60 detik per band, internet sempat putus saat band berganti. Band yang tidak ada di sekitar Anda dilewati otomatis.</div>
+    <button class="b" id="btnScan">Pindai & kunci band terbaik</button>
+    <button class="b r" id="btnScanStop" disabled>Batal</button>
+    <div class="bar"><i id="scanBar"></i></div>
+    <div class="note" id="scanStat">Siap.</div>
+  </div>
+  <div class="card" id="resCard" style="display:none"><h3>Hasil pemindaian</h3>
+    <div id="results"></div>
+    <div class="note">Skor 0-100. Terapkan terbaik untuk tujuan lain tanpa memindai ulang:</div>
+    <button class="b g" onclick="applyBest('game')">Game</button>
+    <button class="b g" onclick="applyBest('stream')">Streaming</button>
+    <button class="b g" onclick="applyBest('zoom')">Zoom</button>
+    <button class="b g" onclick="applyBest('overall')">Overall</button>
+    <div class="msg" id="autoMsg"></div>
+  </div>
+</section>
+
+<!-- BAND -->
+<section class="tab" id="t-band">
+  <div class="card"><h3>Mode jaringan</h3>
+    <select id="netmode">
+      <option value="00">Otomatis (2G/3G/4G)</option>
+      <option value="03">4G (LTE) saja</option>
+      <option value="0302">4G lalu 3G</option>
+      <option value="02">3G saja</option>
+    </select>
+  </div>
+  <div class="card"><h3>Kunci band LTE manual</h3>
+    <div class="chk" id="bands"></div>
+    <div class="note">B1 = 2100, B3 = 1800, B8 = 900, B40 = 2300 MHz. Centang beberapa band untuk membatasi, atau satu band untuk mengunci.</div>
+    <button class="b" id="btnBandApply">Terapkan</button>
+    <button class="b g" id="btnBandAll">Semua band</button>
+    <button class="b g" id="btnBandLoad">Muat ulang</button>
+    <div class="msg" id="bandMsg"></div>
+    <div class="note" id="bandCur"></div>
+  </div>
+</section>
+
+<!-- APN -->
+<section class="tab" id="t-apn">
+  <div class="card"><h3>Profil APN</h3>
+    <div id="profs"></div>
+    <button class="b g" id="btnProfLoad">Muat ulang</button>
+  </div>
+  <div class="card"><h3 id="formTitle">Tambah / ubah profil</h3>
+    <label>Preset cepat</label>
+    <select id="preset">
+      <option value="">- pilih -</option>
+      <option value="Tri|3gprs|3gprs|3gprs">Tri (3gprs)</option>
+      <option value="Indosat|indosatgprs|indosat|indosat">Indosat</option>
+      <option value="Telkomsel|internet||">Telkomsel</option>
+      <option value="XL|xlunlimited|xlgprs|proxl">XL</option>
+    </select>
+    <label>Nama profil</label><input id="p-name">
+    <label>APN</label><input id="p-apn" autocapitalize="none">
+    <label>Username</label><input id="p-user" autocapitalize="none">
+    <label>Password</label><input id="p-pass" autocapitalize="none">
+    <label>Autentikasi</label>
+    <select id="p-auth"><option value="0">0 (default)</option><option value="1">1</option><option value="2">2</option></select>
+    <div class="note">Arti 1 dan 2 (PAP/CHAP) bisa beda antar firmware. Kalau tidak yakin, biarkan 0.</div>
+    <label>Tipe IP</label>
+    <select id="p-ip"><option value="0">IPv4</option><option value="1">IPv4 + IPv6</option><option value="2">IPv6</option></select>
+    <label><input type="checkbox" id="p-def" style="width:auto"> Jadikan default</label>
+    <button class="b" id="btnProfSave">Simpan</button>
+    <button class="b g" id="btnProfNew">Baru</button>
+    <div class="msg" id="apnMsg"></div>
+  </div>
+</section>
+
+<!-- WIFI -->
+<section class="tab" id="t-wifi">
+  <div class="card"><h3>WiFi modem</h3>
+    <div id="radios"><div class="note">Belum dimuat.</div></div>
+    <button class="b" onclick="wifiPick('2.4')">2.4 GHz saja</button>
+    <button class="b" onclick="wifiPick('5')">5 GHz saja</button>
+    <button class="b g" onclick="wifiPick('both')">Dual band</button>
+    <button class="b g" onclick="wifiApply()">Terapkan centang</button>
+    <button class="b g" id="btnWifiLoad">Muat ulang</button>
+    <div class="msg" id="wifiMsg"></div>
+    <div class="note">Menerapkan pengaturan akan me-restart WiFi, sehingga HP sempat terputus. Kalau HP Anda tersambung di band yang dimatikan, sambungkan ulang ke band yang aktif. 5 GHz hanya ada di modem dual band.</div>
+  </div>
+</section>
+
+<!-- LOG -->
+<section class="tab" id="t-log">
+  <div class="card"><h3>Log permintaan</h3>
+    <button class="b g" id="btnLogClear">Bersihkan</button>
+    <pre id="log"></pre>
+  </div>
+</section>
+
+<nav id="nav">
+  <button data-t="login" class="on">Login</button>
+  <button data-t="sig">Sinyal</button>
+  <button data-t="auto">Auto</button>
+  <button data-t="band">Band</button>
+  <button data-t="apn">APN</button>
+  <button data-t="wifi">WiFi</button>
+  <button data-t="log">Log</button>
+</nav>
+
+<script>
+'use strict';
+const $ = id => document.getElementById(id);
+const S = { base: '', queue: [], last: '', logged: false, scanning: false };
+let seq = 0; const pending = {};
+let sigTimer = null;
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+// ---------- native bridge ----------
+window.__native = (id, json) => { const f = pending[id]; delete pending[id]; if (f) f(JSON.parse(json)); };
+function raw(method, path, body, headers) {
+  return new Promise(res => {
+    const id = ++seq; pending[id] = res;
+    Android.request(id, method, S.base + path, JSON.stringify(headers || {}), body || '');
+  });
+}
+function netTest() {
+  return new Promise(res => { const id = ++seq; pending[id] = res; Android.netTest(id, 6000000); });
+}
+function log(s) { const el = $('log'); el.textContent = (new Date().toLocaleTimeString() + ' ' + s + '\n') + el.textContent.slice(0, 6000); }
+
+// ---------- XML ----------
+function flat(t) {
+  const o = {};
+  try {
+    const d = new DOMParser().parseFromString(t, 'text/xml');
+    const r = d.documentElement; if (!r || r.tagName === 'parsererror') return o;
+    o._root = r.tagName;
+    (function walk(n, p) { for (const c of n.children) { if (c.children.length) walk(c, p + c.tagName + '.'); else o[p + c.tagName] = c.textContent; } })(r, '');
+  } catch (e) {}
+  return o;
+}
+const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+function xml(obj) {
+  const f = o => Object.keys(o).map(k => typeof o[k] === 'object' ? `<${k}>${f(o[k])}</${k}>` : `<${k}>${esc(o[k])}</${k}>`).join('');
+  return '<?xml version="1.0" encoding="UTF-8"?><request>' + f(obj) + '</request>';
+}
+function errCode(o) { return o._root === 'error' ? (o.code || 'unknown') : null; }
+
+// ---------- token + antrean permintaan ----------
+function take(tokens) {
+  if (tokens && tokens.length) S.queue = tokens.map(t => t.length > 32 ? t.slice(-32) : t);
+}
+function nextToken() { if (S.queue.length) { S.last = S.queue.shift(); } return S.last; }
+
+async function refreshToken() {
+  let r = await raw('GET', '/api/webserver/SesTokInfo');
+  let o = flat(r.body);
+  if (o.TokInfo) {
+    if (o.SesInfo) Android.setCookie(o.SesInfo);
+    S.last = o.TokInfo.length > 32 ? o.TokInfo.slice(-32) : o.TokInfo; S.queue = [];
+    return true;
+  }
+  r = await raw('GET', '/api/webserver/token');
+  o = flat(r.body);
+  if (o.token) { S.last = o.token.length > 32 ? o.token.slice(-32) : o.token; S.queue = []; return true; }
+  return false;
+}
+
+let chain = Promise.resolve();
+function api(method, path, body, retry = true) {
+  const p = chain.then(() => apiInner(method, path, body, retry));
+  chain = p.catch(() => {});
+  return p;
+}
+async function apiInner(method, path, body, retry) {
+  const h = { '__RequestVerificationToken': nextToken() };
+  const r = await raw(method, path, body, h);
+  take(r.tokens);
+  log((r.status || r.error || '') + ' ' + method + ' ' + path + ' ' + (r.body || '').slice(0, 300));
+  if (r.status === 0) throw new Error('Tidak bisa terhubung ke modem (' + (r.error || '') + ')');
+  const o = flat(r.body);
+  const code = errCode(o);
+  if ((code === '125002' || code === '125003') && retry) { await refreshToken(); return apiInner(method, path, body, false); }
+  if (code === '100003' || code === '125001') { S.logged = false; setStat(); throw new Error('Sesi habis / belum login (kode ' + code + ')'); }
+  if (code) throw new Error('Modem menolak (kode ' + code + ')');
+  return { o, text: r.body };
+}
+
+// ---------- login ----------
+async function login(user, pass) {
+  Android.resetSession();
+  if (!(await refreshToken())) throw new Error('Gagal mengambil token. Alamat modem benar?');
+  try {
+    const first = Android.randomHex(32);
+    const c = await api('POST', '/api/user/challenge_login', xml({ username: user, firstnonce: first, mode: 1 }), false);
+    if (c.o.salt && c.o.servernonce) {
+      const proof = Android.scramProof(pass, c.o.salt, parseInt(c.o.iterations, 10), first, c.o.servernonce);
+      const a = await api('POST', '/api/user/authentication_login', xml({ clientproof: proof, finalnonce: c.o.servernonce }), false);
+      if (a.o.serversignature || a.o._root === 'response') { return; }
+    }
+  } catch (e) {
+    log('SCRAM gagal: ' + e.message);
+    await refreshToken();
+  }
+  const hash = Android.hashLogin(user, pass, S.last);
+  const r = await api('POST', '/api/user/login', xml({ Username: user, Password: hash, password_type: 4 }), false);
+  if (r.o._root !== 'response' || (r.text.indexOf('OK') < 0 && !r.o.serversignature)) throw new Error('Login gagal');
+}
+
+function setStat() {
+  $('hstat').textContent = S.logged ? 'terhubung' : 'belum login';
+  $('hstat').style.color = S.logged ? 'var(--ok)' : 'var(--mut)';
+}
+function showMsg(id, ok, text) { const e = $(id); e.className = 'msg ' + (ok ? 'ok' : 'err'); e.textContent = text; }
+
+$('btnLogin').onclick = async () => {
+  S.base = $('base').value.trim().replace(/\/+$/, '');
+  if (!/^https?:\/\//.test(S.base)) S.base = 'http://' + S.base;
+  showMsg('loginMsg', true, 'Mencoba login...');
+  try {
+    await login($('user').value.trim(), $('pass').value);
+    S.logged = true; setStat();
+    showMsg('loginMsg', true, 'Berhasil login.');
+    show('sig'); loadBands(); loadProfiles();
+  } catch (e) { S.logged = false; setStat(); showMsg('loginMsg', false, e.message + ' (lihat tab Log)'); }
+};
+
+// ---------- sinyal ----------
+const num = v => { const m = String(v || '').match(/-?\d+(\.\d+)?/); return m ? parseFloat(m[0]) : null; };
+function qual(el, v, th) {
+  el.className = '';
+  if (v === null) return;
+  el.className = v >= th[0] ? 'q-ok' : v >= th[1] ? 'q-good' : v >= th[2] ? 'q-fair' : 'q-bad';
+}
+async function readSignal() {
+  const s = (await api('GET', '/api/device/signal')).o;
+  return { raw: s, band: s.band ? String(parseInt(s.band, 10)) : '', rsrp: num(s.rsrp), sinr: num(s.sinr), rsrq: num(s.rsrq) };
+}
+async function pollSignal() {
+  if (!S.logged || S.scanning) return;
+  try {
+    const s = (await api('GET', '/api/device/signal')).o;
+    $('s-rsrp').textContent = s.rsrp || '-'; qual($('s-rsrp'), num(s.rsrp), [-85, -95, -105]);
+    $('s-sinr').textContent = s.sinr || '-'; qual($('s-sinr'), num(s.sinr), [20, 10, 0]);
+    $('s-rsrq').textContent = s.rsrq || '-'; qual($('s-rsrq'), num(s.rsrq), [-9, -12, -15]);
+    $('s-rssi').textContent = s.rssi || '-';
+    $('s-band').textContent = s.band ? 'B' + s.band : '-';
+    $('s-cell').textContent = (s.pci || '-') + ' / ' + (s.cell_id || '-');
+    $('s-earfcn').textContent = s.earfcn || s.dlearfcn || '-';
+    $('s-bw').textContent = (s.dlbandwidth || '-') + ' / ' + (s.ulbandwidth || '-');
+    const p = (await api('GET', '/api/net/current-plmn')).o;
+    $('s-op').textContent = p.FullName || p.ShortName || '-';
+    const m = (await api('GET', '/api/monitoring/status')).o;
+    const t = { '0': 'Tidak ada', '1': 'GSM', '2': 'GPRS', '3': 'EDGE', '4': 'WCDMA', '5': 'HSDPA', '6': 'HSUPA', '7': 'HSPA', '9': 'HSPA+', '19': '4G LTE', '41': '4G LTE', '101': '4G LTE' }[m.CurrentNetworkType] || m.CurrentNetworkTypeEx || m.CurrentNetworkType || '-';
+    $('s-type').textContent = t;
+  } catch (e) { /* log sudah dicatat */ }
+}
+function startSig() { stopSig(); pollSignal(); sigTimer = setInterval(pollSignal, 3000); }
+function stopSig() { if (sigTimer) clearInterval(sigTimer); sigTimer = null; }
+
+// ---------- band manual ----------
+const BANDS = [1, 3, 5, 7, 8, 20, 28, 38, 40, 41];
+const ALL_MASK = 0x7FFFFFFFFFFFFFFFn;
+let curNet = null;
+(function buildBands() {
+  $('bands').innerHTML = BANDS.map(b => `<label><input type="checkbox" data-b="${b}"> B${b}</label>`).join('');
+  const dflt = [1, 3, 8, 40];
+  $('scanBands').innerHTML = BANDS.map(b => `<label><input type="checkbox" data-b="${b}" ${dflt.includes(b) ? 'checked' : ''}> B${b}</label>`).join('');
+})();
+function maskOf(list) { let m = 0n; list.forEach(b => m |= 1n << BigInt(b - 1)); return m; }
+async function loadBands() {
+  try {
+    curNet = (await api('GET', '/api/net/net-mode')).o;
+    $('netmode').value = curNet.NetworkMode || '00';
+    const m = BigInt('0x' + (curNet.LTEBand || '0'));
+    document.querySelectorAll('#bands input').forEach(c => { c.checked = (m >> BigInt(+c.dataset.b - 1)) & 1n ? true : false; });
+    $('bandCur').textContent = 'Mask LTE sekarang: ' + (curNet.LTEBand || '-') + ' | Mode: ' + (curNet.NetworkMode || '-');
+  } catch (e) { showMsg('bandMsg', false, e.message); }
+}
+async function setNet(mode, mask) {
+  if (!curNet) curNet = (await api('GET', '/api/net/net-mode')).o;
+  const body = xml({ NetworkMode: mode, NetworkBand: curNet.NetworkBand || '3FFFFFFF', LTEBand: mask.toString(16).toUpperCase() });
+  await api('POST', '/api/net/net-mode', body);
+}
+async function applyBands(mask) {
+  if (mask === 0n) { showMsg('bandMsg', false, 'Pilih minimal satu band.'); return; }
+  try {
+    await setNet($('netmode').value, mask);
+    showMsg('bandMsg', true, 'Tersimpan. Modem akan mencari ulang jaringan beberapa detik.');
+    setTimeout(loadBands, 4000);
+  } catch (e) { showMsg('bandMsg', false, e.message); }
+}
+$('btnBandApply').onclick = () => applyBands(maskOf([...document.querySelectorAll('#bands input:checked')].map(c => +c.dataset.b)));
+$('btnBandAll').onclick = () => applyBands(ALL_MASK);
+$('btnBandLoad').onclick = loadBands;
+
+// ---------- AUTO: pindai & kunci band terbaik ----------
+let goal = 'game';
+let stopFlag = false;
+let scanResults = [];
+const GOAL_NAME = { game: 'Game', stream: 'Streaming', zoom: 'Zoom / Meeting', overall: 'Overall' };
+document.querySelectorAll('#goals .goal').forEach(b => b.onclick = () => {
+  goal = b.dataset.g;
+  document.querySelectorAll('#goals .goal').forEach(x => x.classList.toggle('on', x === b));
+});
+const clamp = (v, a = 0, b = 100) => Math.max(a, Math.min(b, v));
+function scoreOf(m) {
+  if (!m.net) return { game: 0, stream: 0, zoom: 0, overall: 0 };
+  const sig = 0.6 * clamp((m.sinr + 5) / 30 * 100) + 0.4 * clamp((m.rsrp + 120) / 50 * 100);
+  const lat = clamp(100 - (m.lat - 20)), jit = clamp(100 - m.jit * 4), loss = 100 * (1 - m.loss), dl = clamp(m.dl / 50 * 100);
+  return {
+    game: .40 * lat + .25 * jit + .15 * sig + .20 * loss,
+    stream: .50 * dl + .20 * sig + .10 * jit + .20 * loss,
+    zoom: .25 * lat + .30 * jit + .25 * loss + .10 * sig + .10 * dl,
+    overall: .30 * dl + .25 * lat + .20 * sig + .10 * jit + .15 * loss
+  };
+}
+const avg = a => a.length ? a.reduce((x, y) => x + y, 0) / a.length : 0;
+function setProg(p, t) { $('scanBar').style.width = Math.round(p * 100) + '%'; $('scanStat').textContent = t; }
+
+async function waitBand(target, timeoutMs) {
+  const t0 = Date.now();
+  while (Date.now() - t0 < timeoutMs) {
+    if (stopFlag) throw new Error('stop');
+    try {
+      const s = await readSignal();
+      const okBand = target === 'AUTO' ? s.band !== '' : s.band === String(target);
+      if (okBand && s.rsrp !== null) return s;
+    } catch (e) { /* modem sibuk, coba lagi */ }
+    await sleep(2000);
+  }
+  return null;
+}
+
+async function measure(cand) {
+  const sigs = [];
+  for (let i = 0; i < 5; i++) {
+    if (stopFlag) throw new Error('stop');
+    try { const s = await readSignal(); if (s.rsrp !== null) sigs.push(s); } catch (e) {}
+    await sleep(1200);
+  }
+  if (!sigs.length) return null;
+  const m = { rsrp: avg(sigs.map(s => s.rsrp)), sinr: avg(sigs.map(s => s.sinr === null ? 0 : s.sinr)), rsrq: avg(sigs.map(s => s.rsrq === null ? 0 : s.rsrq)), seen: sigs[sigs.length - 1].band };
+  let t = null;
+  for (let attempt = 0; attempt < 3; attempt++) {  // tunggu data tersambung kembali
+    if (stopFlag) throw new Error('stop');
+    t = await netTest();
+    if (t.lats.length >= 3) break;
+    await sleep(3000);
+  }
+  const lats = t.lats.slice(1);                    // buang sampel pertama (DNS/koneksi)
+  m.net = lats.length >= 2;
+  if (m.net) {
+    const sorted = [...lats].sort((a, b) => a - b);
+    m.lat = sorted[Math.floor(sorted.length / 2)];
+    let d = 0; for (let i = 1; i < lats.length; i++) d += Math.abs(lats[i] - lats[i - 1]);
+    m.jit = d / (lats.length - 1);
+    m.loss = t.fail / 8;
+    m.dl = t.dl;
+  }
+  return m;
+}
+
+$('btnScanStop').onclick = () => { stopFlag = true; setProg(0, 'Membatalkan...'); };
+
+$('btnScan').onclick = async () => {
+  if (S.scanning) return;
+  if (!S.logged) { alert('Login dulu.'); return; }
+  const bands = [...document.querySelectorAll('#scanBands input:checked')].map(c => +c.dataset.b);
+  const cands = bands.map(b => ({ id: b, label: 'B' + b, mask: maskOf([b]) }));
+  if ($('scanAuto').checked) cands.push({ id: 'AUTO', label: 'Auto (semua band)', mask: ALL_MASK });
+  if (!cands.length) { alert('Pilih minimal satu band.'); return; }
+  if (!confirm('Pemindaian akan mengganti band berkali-kali dan internet bisa putus sesekali. Lanjut?')) return;
+
+  S.scanning = true; stopFlag = false; scanResults = [];
+  $('btnScan').disabled = true; $('btnScanStop').disabled = false; $('resCard').style.display = 'none';
+  let origMode = '00', origMask = ALL_MASK;
+  try {
+    curNet = (await api('GET', '/api/net/net-mode')).o;
+    origMode = curNet.NetworkMode || '00';
+    origMask = BigInt('0x' + (curNet.LTEBand || '7FFFFFFFFFFFFFFF'));
+  } catch (e) { showMsg('autoMsg', false, e.message); }
+
+  let locked = false;
+  try {
+    for (let i = 0; i < cands.length; i++) {
+      const c = cands[i], base = i / cands.length, step = 1 / cands.length;
+      setProg(base, `Mengunci ${c.label} (${i + 1}/${cands.length})...`);
+      await setNet('03', c.mask);
+      await sleep(4000);
+      setProg(base + step * 0.2, `Menunggu ${c.label} tersambung...`);
+      const s = await waitBand(c.id, 35000);
+      if (!s) { scanResults.push({ c, ok: false }); log('Band ' + c.label + ' tidak tersedia'); continue; }
+      setProg(base + step * 0.5, `Mengukur ${c.label}...`);
+      const m = await measure(c);
+      if (!m) { scanResults.push({ c, ok: false }); continue; }
+      scanResults.push({ c, ok: true, m, sc: scoreOf(m) });
+    }
+    renderResults();
+    const best = bestFor(goal);
+    if (!best) throw new Error('Tidak ada band yang bisa dipakai. Pengaturan dikembalikan.');
+    setProg(1, `Mengunci ke ${best.c.label}...`);
+    await setNet($('netmode').value === '00' ? '03' : $('netmode').value, best.c.mask);
+    locked = true;
+    showMsg('autoMsg', true, `Terkunci ke ${best.c.label} untuk ${GOAL_NAME[goal]} (skor ${Math.round(best.sc[goal])}).`);
+    setProg(1, `Selesai. Terkunci ke ${best.c.label}.`);
+    loadBands();
+  } catch (e) {
+    if (e.message === 'stop') setProg(0, 'Dibatalkan.');
+    else { setProg(0, 'Gagal: ' + e.message); showMsg('autoMsg', false, e.message); }
+    if (scanResults.length) renderResults();
+  } finally {
+    if (!locked) { try { await setNet(origMode, origMask); log('Pengaturan band dikembalikan'); } catch (e) { log('Gagal mengembalikan band: ' + e.message); } }
+    S.scanning = false; $('btnScan').disabled = false; $('btnScanStop').disabled = true;
+  }
+};
+
+function bestFor(g) {
+  const ok = scanResults.filter(r => r.ok && r.m.net);
+  if (!ok.length) return null;
+  return ok.reduce((a, b) => b.sc[g] > a.sc[g] ? b : a);
+}
+function renderResults() {
+  $('resCard').style.display = 'block';
+  const best = bestFor(goal);
+  $('results').innerHTML = scanResults.map(r => {
+    if (!r.ok) return `<div class="res"><div class="t"><span>${esc(r.c.label)}</span><span class="q-bad">tidak tersedia</span></div></div>`;
+    if (!r.m.net) return `<div class="res"><div class="t"><span>${esc(r.c.label)}</span><span class="q-bad">tanpa internet</span></div><div class="kv">RSRP ${r.m.rsrp.toFixed(0)} dBm | SINR ${r.m.sinr.toFixed(1)} dB</div></div>`;
+    const m = r.m, sc = r.sc;
+    return `<div class="res ${best && best.c.id === r.c.id ? 'best' : ''}">
+      <div class="t"><span>${esc(r.c.label)}${m.seen && r.c.id === 'AUTO' ? ' (aktif B' + esc(m.seen) + ')' : ''}</span><span>${best && best.c.id === r.c.id ? 'terbaik: ' + GOAL_NAME[goal] : ''}</span></div>
+      <div class="kv">RSRP ${m.rsrp.toFixed(0)} dBm | SINR ${m.sinr.toFixed(1)} dB | RSRQ ${m.rsrq.toFixed(0)} dB</div>
+      <div class="kv">Ping ${m.lat.toFixed(0)} ms | Jitter ${m.jit.toFixed(1)} ms | Loss ${(m.loss * 100).toFixed(0)}% | Unduh ${m.dl.toFixed(1)} Mbps</div>
+      <div class="s"><div><b>${Math.round(sc.game)}</b>Game</div><div><b>${Math.round(sc.stream)}</b>Stream</div><div><b>${Math.round(sc.zoom)}</b>Zoom</div><div><b>${Math.round(sc.overall)}</b>Overall</div></div>
+    </div>`;
+  }).join('');
+}
+window.applyBest = async g => {
+  const best = bestFor(g);
+  if (!best) { showMsg('autoMsg', false, 'Belum ada hasil pemindaian yang valid.'); return; }
+  try {
+    await setNet($('netmode').value === '00' ? '03' : $('netmode').value, best.c.mask);
+    goal = g; renderResults();
+    showMsg('autoMsg', true, `Terkunci ke ${best.c.label} untuk ${GOAL_NAME[g]}.`);
+    loadBands();
+  } catch (e) { showMsg('autoMsg', false, e.message); }
+};
+
+// ---------- APN ----------
+let profiles = [], defIdx = '';
+function profFromEl(p) {
+  const g = t => { const e = p.getElementsByTagName(t)[0]; return e ? e.textContent : ''; };
+  return { Index: g('Index'), Name: g('Name'), ApnName: g('ApnName'), Username: g('Username'), Password: g('Password'), AuthMode: g('AuthMode') || '0', iptype: g('iptype') || '0', ReadOnly: g('ReadOnly') };
+}
+async function loadProfiles() {
+  try {
+    const r = await api('GET', '/api/dialup/profiles');
+    const d = new DOMParser().parseFromString(r.text, 'text/xml');
+    defIdx = (d.getElementsByTagName('CurrentProfile')[0] || {}).textContent || '';
+    profiles = [...d.getElementsByTagName('Profile')].map(profFromEl);
+    $('profs').innerHTML = profiles.length ? profiles.map((p, i) => `
+      <div class="prof">
+        <b>${esc(p.Name)}</b> ${p.Index === defIdx ? '<span class="d">• default</span>' : ''}<br>
+        <span style="color:var(--mut)">APN: ${esc(p.ApnName)} | user: ${esc(p.Username) || '-'}</span><br>
+        <button class="b g" onclick="editProf(${i})">Ubah</button>
+        ${p.Index !== defIdx ? `<button class="b g" onclick="setDef('${p.Index}')">Jadikan default</button>` : ''}
+        ${p.ReadOnly !== '1' && p.Index !== defIdx ? `<button class="b r" onclick="delProf('${p.Index}')">Hapus</button>` : ''}
+      </div>`).join('') : '<div class="note">Tidak ada profil.</div>';
+  } catch (e) { showMsg('apnMsg', false, e.message); }
+}
+let editIdx = '';
+window.editProf = i => {
+  const p = profiles[i]; editIdx = p.Index;
+  $('p-name').value = p.Name; $('p-apn').value = p.ApnName; $('p-user').value = p.Username; $('p-pass').value = p.Password;
+  $('p-auth').value = p.AuthMode; $('p-ip').value = p.iptype; $('p-def').checked = p.Index === defIdx;
+  $('formTitle').textContent = 'Ubah profil #' + p.Index;
+  window.scrollTo(0, document.body.scrollHeight);
+};
+$('btnProfNew').onclick = () => {
+  editIdx = ''; ['p-name', 'p-apn', 'p-user', 'p-pass'].forEach(i => $(i).value = '');
+  $('p-auth').value = '0'; $('p-ip').value = '0'; $('p-def').checked = false; $('formTitle').textContent = 'Tambah profil';
+};
+$('preset').onchange = () => {
+  const v = $('preset').value; if (!v) return; const [n, a, u, p] = v.split('|');
+  $('p-name').value = n; $('p-apn').value = a; $('p-user').value = u; $('p-pass').value = p;
+};
+async function reconnect() {
+  try {
+    await api('POST', '/api/dialup/mobile-dataswitch', xml({ dataswitch: 0 }));
+    await sleep(2500);
+    await api('POST', '/api/dialup/mobile-dataswitch', xml({ dataswitch: 1 }));
+  } catch (e) { log('reconnect gagal: ' + e.message); }
+}
+$('btnProfSave').onclick = async () => {
+  const name = $('p-name').value.trim(), apn = $('p-apn').value.trim();
+  if (!name || !apn) { showMsg('apnMsg', false, 'Nama dan APN wajib diisi.'); return; }
+  const isNew = editIdx === '';
+  const prof = {
+    Index: editIdx, IsValid: 1, Name: name, ApnIsStatic: 1, ApnName: apn, DialupNum: '*99#',
+    Username: $('p-user').value, Password: $('p-pass').value, AuthMode: $('p-auth').value,
+    IpIsStatic: 0, IpAddress: '', DnsIsStatic: 0, PrimaryDns: '', SecondaryDns: '', ReadOnly: 0, iptype: $('p-ip').value
+  };
+  try {
+    await api('POST', '/api/dialup/profiles', xml({ Delete: 0, SetDefault: $('p-def').checked && !isNew ? editIdx : 0, Modify: isNew ? 1 : 2, Profile: prof }));
+    if (isNew && $('p-def').checked) {
+      await loadProfiles();
+      const created = profiles.filter(p => p.Name === name && p.ApnName === apn).pop();
+      if (created) await api('POST', '/api/dialup/profiles', xml({ Delete: 0, SetDefault: created.Index, Modify: 0 }));
+    }
+    showMsg('apnMsg', true, 'Profil tersimpan. Menyambung ulang data...');
+    await loadProfiles(); await reconnect();
+    showMsg('apnMsg', true, 'Selesai.');
+  } catch (e) { showMsg('apnMsg', false, e.message); }
+};
+window.setDef = async idx => {
+  try {
+    await api('POST', '/api/dialup/profiles', xml({ Delete: 0, SetDefault: idx, Modify: 0 }));
+    await loadProfiles(); await reconnect(); showMsg('apnMsg', true, 'Default diganti.');
+  } catch (e) { showMsg('apnMsg', false, e.message); }
+};
+window.delProf = async idx => {
+  if (!confirm('Hapus profil ini?')) return;
+  try { await api('POST', '/api/dialup/profiles', xml({ Delete: idx, SetDefault: 0, Modify: 0 })); await loadProfiles(); }
+  catch (e) { showMsg('apnMsg', false, e.message); }
+};
+$('btnProfLoad').onclick = loadProfiles;
+$('btnLogClear').onclick = () => $('log').textContent = '';
+
+// ---------- WiFi 2.4 / 5 GHz ----------
+let wifiDoc = null, radios = [];
+const tv = (el, t) => { const e = el.getElementsByTagName(t)[0]; return e ? e.textContent : ''; };
+function bandOf(el) {
+  const f = (tv(el, 'WifiFrequency') + ' ' + tv(el, 'WifiBand') + ' ' + tv(el, 'WifiFreq')).toLowerCase();
+  if (/5\s*g|^5|\b5\b/.test(f) && !/2\.?4/.test(f)) return '5';
+  if (/2\.?4/.test(f)) return '2.4';
+  const id = tv(el, 'ID');
+  if (/radio\.2/i.test(id)) return '5';
+  if (/radio\.1/i.test(id)) return '2.4';
+  const ch = parseInt(tv(el, 'WifiChannel'), 10);
+  if (ch >= 36) return '5';
+  if (ch >= 1 && ch <= 14) return '2.4';
+  return '?';
+}
+async function loadWifi() {
+  try {
+    const r = await api('GET', '/api/wlan/multi-basic-settings');
+    wifiDoc = new DOMParser().parseFromString(r.text, 'text/xml');
+    radios = [...wifiDoc.getElementsByTagName('Ssid')].filter(el => tv(el, 'wifiisguestnetwork') !== '1').map(el => ({ el, band: bandOf(el), ssid: tv(el, 'WifiSsid'), en: tv(el, 'WifiEnable') === '1', ch: tv(el, 'WifiChannel') }));
+    $('radios').innerHTML = radios.length ? radios.map((r, i) => `<label style="display:flex;gap:8px;align-items:center;color:var(--tx);font-size:15px">
+      <input type="checkbox" style="width:auto" data-i="${i}" ${r.en ? 'checked' : ''}>
+      <span>${esc(r.ssid || 'SSID')} <span style="color:var(--mut)">(${r.band === '?' ? 'band tidak diketahui' : r.band + ' GHz'}${r.ch && r.ch !== '0' ? ', kanal ' + esc(r.ch) : ''})</span></span></label>`).join('')
+      : '<div class="note">Modem ini tidak menampilkan pengaturan WiFi lewat API (mungkin model non-WiFi atau firmware berbeda).</div>';
+    if (radios.length === 1) $('radios').insertAdjacentHTML('beforeend', '<div class="note">Hanya satu radio WiFi terdeteksi. Modem ini kemungkinan single band (2.4 GHz).</div>');
+  } catch (e) { showMsg('wifiMsg', false, e.message); }
+}
+window.wifiPick = async mode => {
+  if (!wifiDoc || !radios.length) { await loadWifi(); if (!radios.length) return; }
+  if (mode !== 'both' && radios.some(r => r.band === '?')) { showMsg('wifiMsg', false, 'Band tidak bisa dikenali otomatis. Centang manual lalu pakai Dual band.'); return; }
+  if (mode !== 'both' && !radios.some(r => r.band === mode)) { showMsg('wifiMsg', false, 'Modem ini tidak punya WiFi ' + mode + ' GHz.'); return; }
+  radios.forEach((r, i) => { r.en = mode === 'both' ? true : r.band === mode; });
+  document.querySelectorAll('#radios input').forEach(c => { c.checked = radios[+c.dataset.i].en; });
+  await wifiApply();
+};
+window.wifiApply = wifiApply;
+async function wifiApply() {
+  document.querySelectorAll('#radios input').forEach(c => { radios[+c.dataset.i].en = c.checked; });
+  if (!radios.some(r => r.en)) { showMsg('wifiMsg', false, 'Minimal satu WiFi harus aktif.'); return; }
+  if (!confirm('WiFi akan restart dan HP sempat terputus. Lanjut?')) return;
+  radios.forEach(r => { const e = r.el.getElementsByTagName('WifiEnable')[0]; if (e) e.textContent = r.en ? '1' : '0'; });
+  const root = wifiDoc.documentElement, ser = new XMLSerializer();
+  let inner = '';
+  for (const c of root.children) { if (c.tagName !== 'WifiRestart') inner += ser.serializeToString(c); }
+  const body = '<?xml version="1.0" encoding="UTF-8"?><request>' + inner + '<WifiRestart>1</WifiRestart></request>';
+  try {
+    await api('POST', '/api/wlan/multi-basic-settings', body);
+    showMsg('wifiMsg', true, 'Tersimpan. WiFi sedang restart, sambungkan ulang HP jika terputus.');
+  } catch (e) { showMsg('wifiMsg', false, e.message); }
+}
+$('btnWifiLoad').onclick = loadWifi;
+
+// ---------- tabs ----------
+function show(t) {
+  document.querySelectorAll('.tab').forEach(e => e.classList.toggle('on', e.id === 't-' + t));
+  document.querySelectorAll('#nav button').forEach(b => b.classList.toggle('on', b.dataset.t === t));
+  if (t === 'sig' && S.logged) startSig(); else stopSig();
+  if (t === 'wifi' && S.logged && !wifiDoc) loadWifi();
+  if (t !== 'login' && t !== 'log' && !S.logged) { $('t-' + t).classList.remove('on'); $('t-login').classList.add('on'); }
+}
+document.querySelectorAll('#nav button').forEach(b => b.onclick = () => show(b.dataset.t));
+setStat();
+</script>
+</body>
+</html>
